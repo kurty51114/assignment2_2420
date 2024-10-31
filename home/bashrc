@@ -1,0 +1,57 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+fi
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+HISTCONTROL=ignoreboth:erasedups
+HISTSIZE=1000
+HISTFILESIZE=1000
+
+EDITOR=kak
+
+shopt -s \
+    autocd \
+    globstar \
+    checkwinsize \
+    cdspell \
+    dirspell \
+    histappend \
+    expand_aliases \
+    dotglob \
+    gnu_errfmt \
+    histreedit \
+    nocasematch
+
+bind 'set show-all-if-ambiguous on'
+bind 'set colored-stats on'
+bind 'set completion-display-width 1'
+bind 'TAB:menu-complete'
+
+# aliases
+alias ls="ls -aF --color=auto --group-directories-first"
+alias ll="ls -lh"
+
+#functions
+
+# create a new directory and enter it
+mkd() {
+  mkdir -p "$1" && cd "$1"
+}
+
+# create a new tmux session and use dir name as session name
+tn() {
+  tmux new -s $(pwd | sed 's/.*\///g')
+}
+
+# add home bin directory to path
+if [[ -d $HOME/bin ]]; then
+  PATH="$HOME/bin:$PATH"
+fi
+
+# use fzf bash shortcuts
+eval "$(fzf --bash)"

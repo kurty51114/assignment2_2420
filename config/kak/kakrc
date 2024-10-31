@@ -1,0 +1,91 @@
+# set colorscheme
+# colorscheme catppuccin_macchiato
+
+# show matching braces
+add-highlighter global/ show-matching
+
+# turn on relative line numbers
+# add-highlighter global/ number-lines -relative -separator " " -hlcursor -min-digits 4 
+
+# Softwrap long lines
+add-highlighter global/ wrap -word -indent
+
+# remove clippy
+set-option global ui_options terminal_assistant=none
+
+# use ripgrep for grep commands
+set-option global grepcmd 'rg -in -.'
+
+# always keep eight lines and three columns displayed around the cursor
+set-option global scrolloff 8,3
+
+# set tabs to 2 spaces
+set global tabstop 2
+set global indentwidth 2
+
+# tabs for autocomplete
+hook global InsertCompletionShow .* %{
+  try %{
+    # this command temporarily removes cursors preceded by whitespace;
+    # if there are no cursors left, it raises an error, does not
+    # continue to execute the mapping commands, and the error is eaten
+    # by the `try` command so no warning appears.
+    execute-keys -draft 'h<a-K>\h<ret>'
+    map window insert <tab> <c-n>
+    map window insert <s-tab> <c-p>
+    hook -once -always window InsertCompletionHide .* %{
+      unmap window insert <tab> <c-n>
+      unmap window insert <s-tab> <c-p>
+    }
+  }
+}
+
+# define surround command
+define-command -override my-surround-add -params 2 %{
+  evaluate-commands -draft -save-regs '"' %{
+    set-register '"' %arg{1}
+    execute-keys -draft P
+    set-register '"' %arg{2}
+    execute-keys -draft p
+  }
+}
+
+# define "surrounds"
+declare-user-mode my-surround-add
+map global user 's' ': enter-user-mode my-surround-add<ret>' -docstring 'surround selection'
+map global my-surround-add (   ':my-surround-add ( )<ret>'         -docstring 'surround with parenthesis'
+map global my-surround-add )   ':my-surround-add ( )<ret>'         -docstring 'surround with parenthesis'
+map global my-surround-add [   ':my-surround-add [ ]<ret>'         -docstring 'surround with brackets'
+map global my-surround-add ]   ':my-surround-add [ ]<ret>'         -docstring 'surround with brackets'
+map global my-surround-add {   ':my-surround-add { }<ret>'         -docstring 'surround with curly brackets'
+map global my-surround-add }   ':my-surround-add { }<ret>'         -docstring 'surround with curly brackets'
+map global my-surround-add <   ':my-surround-add < ><ret>'         -docstring 'surround with angle brackets'
+map global my-surround-add >   ':my-surround-add < ><ret>'         -docstring 'surround with angle brackets'
+map global my-surround-add "'" ":my-surround-add ""'"" ""'""<ret>" -docstring 'surround with quotes'
+map global my-surround-add '"' ":my-surround-add '""' '""'<ret>"   -docstring 'surround with double quotes'
+map global my-surround-add *   ':my-surround-add * *<ret>'         -docstring 'surround with asteriks'
+map global my-surround-add _   ':my-surround-add _ _<ret>'         -docstring 'surround with undescores'
+
+# open a buffers
+map global user 'b' '<esc>:prompt -buffer-completion buffer: %{ buffer %val{text} }<ret>' -docstring "buffer"
+
+# open files with fd
+map global user 'f' '<esc>:prompt -shell-script-candidates %{ fd --type f --hidden } file: %{ edit %val{text} }<ret>' -docstring "file"
+
+# comment selection
+map global user 'c' ': comment-line<ret>'  -docstring 'comment selection'
+
+# grep word
+map global user 'g' ': grep ' -docstring 'ripgrep search'
+
+# copy to system clipboard
+map global user 'y' "<a-|> wl-copy<ret>" -docstring "copy to system clipboard"
+
+# set some colors and attributes
+set-face global MenuForeground red,default
+set-face global MenuBackground white,default
+set-face global PrimarySelection default,black
+set-face global comment bright-black+i
+set-face global function cyan+b
+set-face global value yellow+b
+

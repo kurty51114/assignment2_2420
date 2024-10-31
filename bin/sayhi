@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sayhi() {
+	echo "hello $1"
+}
+
+sayhi $1

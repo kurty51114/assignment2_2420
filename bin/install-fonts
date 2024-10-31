@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Script to install fonts
+
+fonts_dir="$HOME/.local/share/fonts"
+working_directory=$(mktemp -d)
+
+# Create fonts directory if it doesn't exist
+mkdir -p "$fonts_dir"
+
+# Declare font names and their respective download URLs
+declare -A fonts=(
+  ["Inter"]="https://api.github.com/repos/rsms/inter/releases/latest"
+  ["MapleMono-NF"]="https://api.github.com/repos/subframe7536/maple-font/releases/latest"
+  ["SN-Pro"]="https://api.github.com/repos/supernotes/sn-pro/releases/latest"
+)
+
+# Function to download and install a font
+install_font() {
+  local font_name=$1
+  local url=$2
+  local zip_file="$working_directory/${font_name}.zip"
+
+  # Check if font is already installed
+  if [[ -d "$fonts_dir/$font_name" ]]; then
+    echo "$font_name is already installed."
+    return
+  fi
+
+  # Download the font
+  echo "Downloading $font_name..."
+  if [[ $font_name == "MapleMono-NF" ]]; then
+    download_url=$(curl -s "$url" | grep "browser_download_url" | grep "MapleMono-NF.zip" | cut -d '"' -f 4)
+  elif [[ $font_name == "SN-Pro" ]]; then
+    download_url=$(curl -s "$url" | grep "browser_download_url" | grep "SN-Pro.zip" | cut -d '"' -f 4)
+  else
+    download_url=$(curl -s "$url" | grep "browser_download_url" | grep ".zip" | cut -d '"' -f 4)
+  fi
+
+  # Debug: print the download URL
+  echo "Download URL for $font_name: $download_url"
+
+  if [[ -z $download_url ]]; then
+    echo "Error: Unable to find download URL for $font_name."
+    exit 1
+  fi
+
+  # Use curl with -L to follow redirects
+  curl -L "$download_url" -o "$zip_file" || { echo "Download failed for $font_name"; exit 1; }
+
+  # Unzip fonts to fonts_dir
+  mkdir -p "$fonts_dir/$font_name"
+  unzip -q "$zip_file" -d "$fonts_dir/$font_name" || { echo "Unzip failed for $font_name"; exit 1; }
+
+  echo "$font_name installed."
+}
+
+# Iterate through fonts and install them
+for font in "${!fonts[@]}"; do
+  install_font "$font" "${fonts[$font]}"
+done
+
+# Clean up temporary files
+rm -rf "$working_directory"
+
+echo "Font installation complete."
