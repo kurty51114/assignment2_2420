@@ -51,7 +51,7 @@ This project involves creating a script to handle the setup of a new user accoun
 
 The `new_user.sh` script automates the process of creating a new user on the system, initializing their home directory, and adding them to appropriate groups. It contains several functions:
 
-- ************************createUserGroup**: This function creates a new group with the same name as the user and assigns it a unique GID. It checks if the group already exists, adding it to both the /etc/group and /etc/gshadow files. If successfully created, it returns a success message.
+- **createUserGroup**: This function creates a new group with the same name as the user and assigns it a unique GID. It checks if the group already exists, adding it to both the /etc/group and /etc/gshadow files. If successfully created, it returns a success message.
 
 - **createNewGroup**: This function creates a specified group that doesn't share the same name as the user. It assigns a unique GID to the group and verifies that it was successfully created by checking /etc/group.
 
