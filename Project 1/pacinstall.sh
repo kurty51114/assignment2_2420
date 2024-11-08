@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is run as root - using EUID to check if the script is run as root, if not, print an error message
+if [[ $EUID -ne 0 ]]; then
+    echo "error: script not run using sudo (or as root user)"
+    exit 1
+fi
+
 # Function used to display usage of this script in the getopts loop below - following format of https://stackoverflow.com/questions/9725675/is-there-a-standard-format-for-command-line-shell-help-text
 usage() {
     echo "Usage: $0 [-f package-list-file]"

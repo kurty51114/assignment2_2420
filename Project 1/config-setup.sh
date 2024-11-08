@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is run as root - using EUID to check if the script is run as root, if not, print an error message
+if [[ $EUID -ne 0 ]]; then
+    echo "error: script not run using sudo (or as root user)"
+    exit 1
+fi
+
 # Check if cloned directories exist
 if [[ ! -d $HOME/cloned_files/bin ]]; then  # Check for the bin directory
     echo "Error: cloned bin directory does not exist."

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the script is run as root - using EUID to check if the script is run as root, if not, print an error message
+if [[ $EUID -ne 0 ]]; then
+    echo "error: script not run using sudo (or as root user)"
+    exit 1
+fi
+
 # Default name for file storing the package list - will be able to take the filename as an argument later on (assumes that there already is a packages.txt file that exists in the same directory as this script)
 PACKAGE_FILE="packages.txt"
 
