@@ -1,62 +1,65 @@
 #!/bin/bash
 
-# variable storing default file name storing packages for installation
-PACKAGE_FILE="list"
+# Default name for file storing the package list - will be able to take the filename as an argument later on (assumes that there already is a packages.txt file that exists in the same directory as this script)
+PACKAGE_FILE="packages.txt"
 
-# variable storing an array to be used to hold the names of all the packages requested to be installed, which already includes tmux and kakoune which are used in the setup/config
+# Default list of packages (to be used to reset the default packages file if more packages are added to it by the user to be installed)
 packages=("tmux" "kakoune")
 
-# function to show the usage of the script with option descriptions
+# Function to show script usage - first line displays the format of the command, then the subsequent lines show the options available, whether it be running the package installer with package file or symbolic link script
 usage() {
-    echo "Usage: $0 [-p package1 package2 ...] [-s]"
+    echo "Usage: $0 [-f package_file] [-s]"
     echo "Options:"
-    echo "  -p  option to enter names of packages for installation. If entering multiple packages, separate by spaces."
-    echo "  -s  Run the symbolic link setup script [config-setup.sh]."
+    echo "  -f  Specify a file containing the list of packages to install (one package per line). "
+    echo "  -s  Run the symbolic link setup script."
     exit 1
 }
 
-# process options shown in usage function - p and s
-while getopts ":p:s" opt; do
+# Process options - three possible options, 1 being no options selected (shows usage with usage function), f being the package file with the file name, s being the symbolic link script, and error handling with any other option inputs
+while getopts ":f:s" opt; do
     case ${opt} in
-        p)
-            # shifts the positional arguments with the option -p to remove it - purpose is to add the remaining arguments to the packages array - https://www.geeksforgeeks.org/shift-command-in-linux-with-examples/
-            shift
-            # append all the rest of the arguments to the list of packages array
-            packages+=("$@")
-            ;;
+        f)
+          # Set the specified package file to PACKAGE_FILE
+          PACKAGE_FILE="$OPTARG"
+          # Ensure the specified package file exists, else print out an error message and create the new file
+          if [ ! -f "$PACKAGE_FILE" ]; then        
+            echo "No specified package list $PACKAGE_FILE installed. Installing default packages."
+          else
+            # Add the contents of the specified package file to the packages.txt file
+            cat "$PACKAGE_FILE" >> packages.txt
+                
+            # Add default packages from the packages array, appending each package to a new packages.txt file - this will be used to install the default packages if the user has added more packages to the package file
+            for package in "${packages[@]}"; do
+              echo "$package" >> packages.txt
+            done
+          fi
+
+          # Run pacinstall.sh with the generated package list file
+          ./pacinstall.sh -f packages.txt
+
+          # Check for errors in running pacinstall.sh - $? is a special variable that holds the exit status of the last command run, -ne compares the exit status to 0 (0 being successful, any other number being an error)
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to run pacinstall.sh"
+            exit 1
+          fi
+
+          # Clean up the temporary package list - remove the packages.txt file
+          rm packages.txt
+          echo "All requested operations completed successfully.";;
         s)
-            # run the symbolic link setup script + handle any errors
-            ./symlink_configs.sh
-            if [ $? -ne 0 ]; then
-                echo "Error: Failed to run symlink_configs.sh"
-                exit 1
-            fi
-            ;;
+          # Run the symbolic link setup script and check for errors by using the $? variable to check the exit status of the last command run, and -ne to compare the exit status to 0 (0 being successful, any other number being an error). if an error is found, print out an error message and exit the script
+          ./config-setup.sh
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to run config-setup.sh"
+            exit 1
+          fi
+          ;;
         \?)
-            # option if the option provided is not listed above
-            echo "Error: Invalid option -$OPTARG" >&2
-            usage
-            ;;
+          echo "Error: Invalid option -$OPTARG"
+          usage
+          ;;
     esac
 done
-
-# shift the OPTIND variable so that it will be used properly in the following step to write the package list to a file
-shift $((OPTIND -1)
-   
-# clear any previous packages file that may have been created if the script was run before
-rm -f "$PACKAGE_FILE"
-# iterate through all of the array items in packages and appending them to the list of packages file
-for package in "${packages[@]}"; do
-    echo "$package" >> "$PACKAGE_FILE"
-done
-
-# run pacinstall.sh with the generated package list file
-./pacinstall.sh -f "$PACKAGE_FILE"
-    
-# error checking whether the command ran properly  - https://askubuntu.com/questions/29370/how-to-check-if-a-command-succeeded
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to run pacinstall.sh"
-    exit 1
+if [[ $OPTIND -eq 1 || $OPTIND -eq 2 ]]; then
+  usage
 fi
-
-echo "All requested operations completed successfully."
