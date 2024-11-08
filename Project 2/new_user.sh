@@ -52,14 +52,16 @@ addUserToGroup() {
   local groupName=$1 # groupname variable initalizaed to take first argument to the function
   local username=$2 # username variable initlialized to take the second argument to the function
 
-  # Check if the group already has any members, using regex from our class (.*)
-  if grep -q "^$groupName:" /etc/group; then
-    # If there are existing users (check end of the line, add username with a comma to separate from other users- https://askubuntu.com/questions/1446406/end-of-line-in-sed-command#:~:text=The%20easiest%20in%20this%20case,character%2C%20meaning%20end%20of%20line
-    
-    sed -i "/^$groupName:/ s/$/,$username/" /etc/group
+  # initialize the group variable by assigning the line of the group that the user intends to add their username to
+  local group=$(grep "^$groupName:" /etc/group)
+  
+  # checking whether or not the last character of the group is a colon (indicating no other users in group)
+  if [[ $group =~ :$ ]]; then
+    # If there are no existing users in the group (check end of the line, add username with a comma to separate from other users- https://askubuntu.com/questions/1446406/end-of-line-in-sed-command#:~:text=The%20easiest%20in%20this%20case,character%2C%20meaning%20end%20of%20line
+    sed -i "/^$groupName:/ s/$/$username/" /etc/group
   else
-    # If no existing users, add without a comma
-    sed -i "/^$groupName:/ s/$/:$username/" /etc/group
+    # If existing users, add username with a comma
+    sed -i "/^$groupName:/ s/$/,$username/" /etc/group
   fi
 }
 
@@ -136,7 +138,8 @@ addUser() {
         # iterate over the string of additional groups separated by spaces - https://stackoverflow.com/questions/25870689/simple-unix-way-of-looping-through-space-delimited-strings
         for group in ${additional_groups}; do
             # Ensure the group exists before assigning, else return an error
-            if grep -q "^${group}:" /etc/group; then  
+            if grep -q "^${group}:" /etc/group; then
+              addUserToGroup ${group} ${username}
               echo "Added ${username} to group ${group}."
             else
               # if the group does not exist, print error message, and ask user whether they want to create the new group
