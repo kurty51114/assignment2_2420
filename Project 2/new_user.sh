@@ -142,21 +142,11 @@ addUser() {
               addUserToGroup ${group} ${username}
               echo "Added ${username} to group ${group}."
             else
-              # if the group does not exist, print error message, and ask user whether they want to create the new group
-                echo "Error: Group ${group} does not exist."
-                read -p "Create group? (Y/N)" answer
-                # if the input is y or Y, creates new group and adds the user to the group with the functions created
-                if [[ ${answer} == Y || ${answer} == y ]]; then
-                  createNewGroup ${group}
-                  addUserToGroup ${group} ${username}
-                  # if the input is N or n, exits
-                elif [[ ${answer} == N || ${answer} == n ]]; then
-                  exit 1
-                else
-                  # if the input is neither option, exits and the user has to redo the group
-                  echo "invalid entry. please try again."
-                  exit 1
-                fi
+              # if the group does not exist, print error message,then create group and add user to the group
+              echo "Error: Group ${group} does not exist. creating group..."
+              createNewGroup ${group}
+              addUserToGroup ${group} ${username}
+              echo "successfully created and added ${username} to new groups."
             fi
         done
     fi
@@ -187,12 +177,20 @@ provideOptions() {
               fi
               ;;
             g) 
-              # this options sets the additional groups as the argument(s) to the option g
-              additional_groups="$OPTARG" 
+              # this option sets the additional groups as the list of groups to the option g
+              shift $((OPTIND-1)) # shift the arguemnts to the right
+              if [[ $# -ge 1 ]]; then # check if the number of arguments is greater than or equal to 1 - indicates if there is more than one group as an argument (wrong format)
+                echo "Error: additional groups argument passed incorrectly." # print error message explaining the correct format
+                echo "Usage: $0 [-u username] [-s shell (full path)] [-g additional_groups (singular string of group names separated by spaces)]"
+                echo "Example: -g 'additional_group1 additional_group2...'"
+                exit 1
+              else # else, assign the argument to the additional_groups variable
+                additional_groups="$OPTARG"
+              fi
               ;;
-            :) echo "Usage: $0 [-u username] [-s shell (full path)] [-g additional_groups]"
+            :) echo "Usage: $0 [-u username] [-s shell (full path)] [-g additional_groups (singular string of group names separated by spaces)]"
               ;;
-            \?) echo "Usage: $0 [-u username] [-s shell (full path)] [-g additional_groups]"
+            \?) echo "Usage: $0 [-u username] [-s shell (full path)] [-g additional_groups (singular string of group names separated by spaces)]"
                 exit 1
               ;;
         esac

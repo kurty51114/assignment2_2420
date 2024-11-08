@@ -51,13 +51,19 @@ This project involves creating a script to handle the setup of a new user accoun
 
 The `new_user.sh` script automates the process of creating a new user on the system, initializing their home directory, and adding them to appropriate groups. It contains several functions:
 
-- **createGroup**: This function creates a new group with the same name as the user and assigns the user a unique GID. It checks if the group already exists and ensures it is added to both the `/etc/group` and `/etc/gshadow` files. If the group is successfully created, the function returns a success message.
+- ************************createUserGroup**: This function creates a new group with the same name as the user and assigns it a unique GID. It checks if the group already exists, adding it to both the /etc/group and /etc/gshadow files. If successfully created, it returns a success message.
 
-- **home_init**: This function initializes the user's home directory by copying the contents of `/etc/skel` (the skeleton directory) into the newly created home directory. The home directory is then owned by the user and their group.
+- **createNewGroup**: This function creates a specified group that doesn't share the same name as the user. It assigns a unique GID to the group and verifies that it was successfully created by checking /etc/group.
 
-- **addUser**: This function creates the user entry in the `/etc/passwd` file with a unique UID and GID. It also creates the user's home directory and initializes it using the `home_init` function. Additionally, it handles the addition of the user to any additional groups specified.
+- **addUserToGroup**: This function adds the user to a specified group. It modifies the group entry in /etc/group, appending the user’s name. If no users are present in the group, the username is added without a comma separator.
 
-- **provideOptions**: This function parses command-line arguments passed to the script. The `-u` option is used for specifying the username, `-s` for the shell, and `-g` for any additional groups. If the username is provided, the function calls `addUser` to create the user with the specified settings.
+- **home_init**: This function initializes the user's home directory by copying the contents of /etc/skel (the skeleton directory) into the new home directory. Ownership is set to the user and their primary group.
+
+- **setPasswd**: This function sets the user's password. It prompts the user to enter the password, checking for errors, and continues until successfully set.
+
+- **addUser**: This function creates the user entry in the /etc/passwd file with a unique UID and GID, initializes the home directory with home_init, and adds the user to any additional specified groups. It first checks if the user already exists, then determines the next available UID/GID and sets up both.
+
+- **provideOptions**: This function parses command-line arguments passed to the script. The -u option specifies the username, -s sets the shell, and -g handles additional groups. If the username is provided, the function calls addUser to create the user with the specified settings.
 
 ## How to Use
 1. Clone this repository to your home directory on linux.
@@ -86,6 +92,6 @@ The `new_user.sh` script automates the process of creating a new user on the sys
 
   `./main.sh -f my-packages.txt -s`
 
-- To create a new user `bobtom with `/bin/bash` as the shell and add them to the `sudo` and `developers` groups:
+- To create a new user `bobtom` with `/bin/bash` as the shell and add them to the `sudo` and `developers` groups:
 
-  `./new_user.sh -u bobtom -s /bin/bash -g sudo,developers`
+  `./new_user.sh -u bobtom -s /bin/bash -g "sudo developers"`
